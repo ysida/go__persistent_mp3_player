@@ -71,7 +71,18 @@ func playMP3Files() {
 		return
 	}
 
-	var currentPlaying int
+	// var currentPlaying int
+
+	// defer file.Close()
+
+	currentPlaying := 0
+
+	persistenceFile := "persistence.json"
+	persistenceData, _ := readPersistenceFile(persistenceFile)
+	if value, ok := persistenceData["currently_playing"]; ok {
+		currentPlaying = value.(int)
+	}
+
 	for {
 
 		// ensure that the currentPlaying index is within the bounds of the mp3Files
@@ -87,34 +98,19 @@ func playMP3Files() {
 			continue
 		}
 
-		defer file.Close()
-		currentPlaying := 0
-		if value, ok := persistenceData["currently_playing"]; ok {
-			currentPlaying = value.(int)
+		// Update persistence data 
+		persistenceData["currently_playing"] = currentPlaying
+		err2 := writePersistenceFile(persistenceFile, persistenceData)
+		if err2 != nil {
+			fmt.Println("Error writing persistence file:", err)
 		}
 
-		// Update persistence data and write to file every 5 seconds
-		go func() {
-			for {
-				persistenceData["currently_playing"] = currentPlaying
-				err := writePersistenceFile(persistenceFile, persistenceData)
-				if err != nil {
-					fmt.Println("Error writing persistence file:", err)
-				}
-				time.Sleep(5 * time.Second)
-			}
-		}()
 		cmd := exec.Command("mpg123", file.Name())
 		cmd.Run()
-
-		// Persist current playing location every 5 seconds
-		time.Sleep(5 * time.Second)
-		fmt.Println("Persisting current playing location...")
 
 		currentPlaying++
 	}
 }
-
 
 func main() {
 	playMP3Files()
