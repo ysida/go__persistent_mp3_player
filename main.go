@@ -33,7 +33,7 @@ func isMP3File(filename string) bool {
 
 
 func playMP3Files() {
-	files, err := os.ReadDir(".")
+	mp3Files, err := getMp3Files()
 	if err != nil {
 		fmt.Println("Error reading directory:", err)
 		return
@@ -41,16 +41,19 @@ func playMP3Files() {
 
 	var currentPlaying int
 	for {
-		if currentPlaying >= len(files) {
+
+		// ensure that the currentPlaying index is within the bounds of the mp3Files
+		if currentPlaying >= len(mp3Files) {
 			currentPlaying = 0
 		}
 
-		file := files[currentPlaying]
+		file := mp3Files[currentPlaying]
 		if file.IsDir() || !isMP3File(file.Name()) {
 			currentPlaying++
 			continue
 		}
 
+		// print currently playing
 		fmt.Println("Playing:", file.Name())
 		cmd := exec.Command("mpg123", file.Name())
 		cmd.Run()
