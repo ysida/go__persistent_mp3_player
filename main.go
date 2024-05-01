@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,11 +9,10 @@ import (
 	"time"
 )
 
-func getMp3Files() []string {
+func getMp3Files() ([]string, error) {
 	files, err := os.ReadDir(".")
 	if err != nil {
-		fmt.Println("Error reading directory:", err)
-		return nil
+		return nil, err
 	}
 
 	var mp3Files []string
@@ -24,13 +24,45 @@ func getMp3Files() []string {
 
 	sort.Strings(mp3Files) // Sort the mp3 files alphabetically
 
-	return mp3Files
+	return mp3Files, nil
 }
 
 func isMP3File(filename string) bool {
 	return len(filename) > 4 && filename[len(filename)-4:] == ".mp3"
 }
 
+func readPersistenceFile(filename string) (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+	file, err := os.Open(filename)
+	if err != nil {
+		return data, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&data)
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
+
+func writePersistenceFile(filename string, data map[string]interface{}) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func playMP3Files() {
 	mp3Files, err := getMp3Files()
@@ -47,23 +79,15 @@ func playMP3Files() {
 			currentPlaying = 0
 		}
 
-		file := mp3Files[currentPlaying]
-		if file.IsDir() || !isMP3File(file.Name()) {
+		fileName := mp3Files[currentPlaying]
+		file, err := os.Open(fileName)
+		if err != nil {
+			fmt.Println("Error opening file:", err)
 			currentPlaying++
 			continue
 		}
 
-		// print currently playing
-		fmt.Println("Playing:", file.Name())
-		// Read persistence file
-		persistenceFile := "persistence.json"
-		persistenceData, err := readPersistenceFile(persistenceFile)
-		if err != nil {
-			fmt.Println("Error reading persistence file:", err)
-			return
-		}
-
-		// Set currentPlaying from persistence data or start from 0
+		defer file.Close()
 		currentPlaying := 0
 		if value, ok := persistenceData["currently_playing"]; ok {
 			currentPlaying = value.(int)
