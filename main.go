@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"time"
 )
 
@@ -20,6 +21,9 @@ func getMp3Files() []string {
 			mp3Files = append(mp3Files, file.Name())
 		}
 	}
+
+	sort.Strings(mp3Files) // Sort the mp3 files alphabetically
+
 	return mp3Files
 }
 
