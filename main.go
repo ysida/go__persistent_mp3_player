@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"sort"
-	"time"
 )
 
 func getMp3Files() ([]string, error) {
@@ -80,7 +79,7 @@ func playMP3Files() {
 	persistenceFile := "persistence.json"
 	persistenceData, _ := readPersistenceFile(persistenceFile)
 	if value, ok := persistenceData["currently_playing"]; ok {
-		currentPlaying = value.(int)
+		currentPlaying = int(value.(float64))
 	}
 
 	for {
